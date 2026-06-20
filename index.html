@@ -2446,7 +2446,7 @@ var qrcode = function() {
   var states={input:"入力画面",comingsoon:"公開前(準備中)",waiting:"送信待ち",sent:"受付完了",review:"要確認",cancel_dup:"重複あり",cancel_member:"却下(会員)",cancel_renmei:"却下(連名)",cancel_self:"取消(本人依頼)",cancel_manual:"取消(手動)",notfound:"該当なし",multi:"複数該当"};
 
   function stepBar(active){
-    var steps=[{t:"受付",ic:"ti-inbox"},{t:"確認",ic:"ti-search"},{t:"完了",ic:"ti-rosette-discount-check"}];
+    var steps=[{t:"受付",ic:"ti-inbox"},{t:"審査",ic:"ti-search"},{t:"完了",ic:"ti-rosette-discount-check"}];
     var idx={recv:0,check:1,done:2}[active];
     var h='<div style="display:flex; align-items:center; margin:4px 0 20px;">';
     steps.forEach(function(s,i){
@@ -2559,13 +2559,13 @@ var qrcode = function() {
   }
   function selfCancelScreen(){
     var h='';
-    h+=banner({bg:"var(--bg-secondary)",fg:"var(--text-primary)",ic:"ti-circle-check",title:"お申込みを取り消しました",desc:"お取り消しのご依頼を承り、こちらのお申込みを取り消しました。"});
+    h+=banner({bg:"var(--bg-secondary)",fg:"var(--text-primary)",ic:"ti-circle-check",title:"お申込みを取り消しました",desc:"お取り消しのご依頼を承り、お申込みを取り消しました。"});
     h+=applicantCard(true);
     return h;
   }
   function manualCancelScreen(){
     var h='';
-    h+=banner({bg:"var(--bg-secondary)",fg:"var(--text-primary)",ic:"ti-circle-x",title:"お申込みを取り消しました",desc:"こちらのお申込みは取り消しとなっております。お心当たりがない場合や、ご不明な点がございましたら、お手数ですが下記までお問い合わせください。"});
+    h+=banner({bg:"var(--bg-secondary)",fg:"var(--text-primary)",ic:"ti-circle-x",title:"お申込みを取り消しました",desc:"お申込みは取り消しとなっております。お心当たりがない場合や、ご不明な点がございましたら、お手数ですが下記までお問い合わせください。"});
     h+=applicantCard(true);
     h+=contactBlock();
     return h;
@@ -2612,14 +2612,15 @@ var qrcode = function() {
     if(isCompleted) lastCompleted=state;
     if(state==="input"){
       html+='<p style="margin:2px 0 18px; font-size:13.5px; line-height:1.75; color:var(--text-secondary);">ご本人確認のため、お申込み時にご登録の<b style="color:var(--text-primary); font-weight:600;">携帯電話番号</b>と<b style="color:var(--text-primary); font-weight:600;">生年月日</b>を入力してください。</p>';
-      html+='<label style="display:block; font-size:12.5px; font-weight:600; margin:0 0 7px; color:var(--text-secondary);">携帯電話番号</label>';
-      html+='<div class="fieldwrap"><span class="ficon">'+ic("device-mobile",20)+'</span><input id="f_tel" type="tel" inputmode="numeric" placeholder="09012345678" oninput="window.__clearErr()" /></div>';
+      html+='<label style="display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; margin:0 0 7px; color:var(--text-secondary);">'+ic("device-mobile",15,"var(--text-secondary)")+'携帯電話番号</label>';
+      html+='<div class="fieldwrap"><span class="ficon">'+ic("device-mobile",20)+'</span><input id="f_tel" type="tel" inputmode="numeric" placeholder="" oninput="window.__clearErr()" /></div>';
+      html+='<p style="margin:7px 0 0; font-size:11.5px; line-height:1.6; color:var(--text-tertiary);">携帯電話番号を半角数字、ハイフンなしでご入力ください（例：09012345678）</p>';
       html+='<p id="e_tel" class="err"></p>';
-      html+='<label style="display:block; font-size:12.5px; font-weight:600; margin:13px 0 7px; color:var(--text-secondary);">生年月日</label>';
-      html+='<div class="fieldwrap"><span class="ficon">'+ic("calendar-month",20)+'</span><input id="f_dob" type="text" inputmode="numeric" placeholder="西暦8桁（例：19950401）" oninput="window.__clearErr()" /></div>';
+      html+='<label style="display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; margin:13px 0 7px; color:var(--text-secondary);">'+ic("calendar-month",15,"var(--text-secondary)")+'生年月日</label>';
+      html+='<div class="fieldwrap"><span class="ficon">'+ic("calendar-month",20)+'</span><input id="f_dob" type="text" inputmode="numeric" placeholder="" oninput="window.__clearErr()" /></div>';
+      html+='<p style="margin:7px 0 0; font-size:11.5px; line-height:1.6; color:var(--text-tertiary);">西暦8桁の半角数字でご入力ください。例）1955年3月8日生まれ → 19550308</p>';
       html+='<p id="e_dob" class="err"></p>';
       html+='<button onclick="window.__submit()" style="width:100%; height:54px; margin-top:20px; background:var(--accent); color:#fff; border:none; border-radius:14px; font-size:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; box-shadow:0 6px 18px rgba(37,99,235,0.30);">'+ic("search",20)+'状況を確認する</button>';
-      html+='<p style="margin:16px 0 0; font-size:11px; color:var(--text-tertiary); line-height:1.6; text-align:center;">最新のお申込み状況を表示しています。</p>';
       b.innerHTML=html; window.scrollTo(0,0); return;
     }
     if(state==="comingsoon"){
@@ -2632,13 +2633,13 @@ var qrcode = function() {
       html+=completedScreen({dup:true});
     } else if(state==="review"){
       html+=stepBar("check");
-      html+=banner({bg:"var(--bg-warning)",fg:"var(--text-warning)",ic:"ti-eye-search",title:"内容を確認しています",desc:"お申込み内容を確認しております。今しばらくお待ちください。"});
+      html+=banner({bg:"var(--bg-warning)",fg:"var(--text-warning)",ic:"ti-eye-search",title:"審査中",desc:"お申込み内容を審査しております。審査には数日かかることがあります。お時間をあけてこのサイトで再度ご確認ください。"});
       html+=applicantCard();
       html+=saveBlock();
     } else if(state==="cancel_member"){
       html+=rejectScreen("お申し込みいただいた勤務先の会員歯科医師の情報（会員番号・お名前）について確認いたしましたところ、該当がございませんでした。");
     } else if(state==="cancel_renmei"){
-      html+=rejectScreen("お申込みの「お名前」欄に、複数の方のお名前が入力されていました。本研修会はお一人ずつ別々にお申込みいただく必要があるため、こちらのお申込みはお受けできませんでした。");
+      html+=rejectScreen("お申込みの「お名前」欄に、複数の方のお名前が入力されていました。本研修会はお一人ずつ別々にお申込みいただく必要があるため、お申込みはお受けできませんでした。");
     } else if(state==="cancel_self"){
       html+=selfCancelScreen();
     } else if(state==="cancel_manual"){
@@ -2653,7 +2654,6 @@ var qrcode = function() {
     } else if(state==="notfound"){
       html+='<div style="text-align:center; padding:6px 0 2px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="font-size:40px; color:var(--text-tertiary);width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:0 0 auto;"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 16v.01" /> <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" /></svg></div>';
       html+='<p style="margin:10px 0 4px; font-size:16px; font-weight:500; text-align:center;">お申込みが確認できませんでした</p>';
-      html+='<p style="margin:0 0 14px; font-size:12px; text-align:center; color:var(--text-tertiary);">最新のお申込み状況を表示しています</p>';
       html+='<p style="margin:0 0 12px; font-size:13px; text-align:center; color:var(--text-secondary); line-height:1.6;">確認できない場合、次のいずれかの可能性があります。</p>';
       // 原因A・Bを一括り
       html+='<div style="background:var(--bg-secondary); border-radius:var(--r-md); padding:2px 16px 14px;">';
@@ -2662,7 +2662,7 @@ var qrcode = function() {
         +'<p style="margin:0; padding-left:23px; font-size:13px; line-height:1.7; color:var(--text-secondary);">お申込みされてすぐの場合は、まだ反映されていないことがあります。<b style="color:var(--text-primary); font-weight:500;">1日ほどおいてから</b>、もう一度ご確認ください。</p></div>';
       html+='<div style="padding:13px 0 0; margin-top:13px; border-top:0.5px solid var(--border);">'
         +'<p style="margin:0 0 3px; font-size:13px; font-weight:600;">'+ic('pencil',16,'var(--text-warning)','margin-right:7px;')+'入力内容に誤りがある可能性</p>'
-        +'<p style="margin:0 0 11px; padding-left:23px; font-size:13px; line-height:1.7; color:var(--text-secondary);">お申込み時と<b style="color:var(--text-primary); font-weight:500;">ちがう内容</b>（ふりがな・携帯番号・生年月日）を入力されていると、確認できません。お申込み時と<b style="color:var(--text-primary); font-weight:500;">同じ内容</b>で、もう一度お試しください。</p>'
+        +'<p style="margin:0 0 11px; padding-left:23px; font-size:13px; line-height:1.7; color:var(--text-secondary);">お申込み時と<b style="color:var(--text-primary); font-weight:500;">ちがう内容</b>（携帯番号・生年月日）を入力されていると、確認できません。お申込み時と<b style="color:var(--text-primary); font-weight:500;">同じ内容</b>で、もう一度お試しください。</p>'
         +'<button onclick="window.__go(\'input\')" style="width:100%; height:42px; background:var(--bg-primary); border:0.5px solid var(--border2); border-radius:var(--r-md); font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">'+ic('refresh',16)+'入力し直して確認する</button></div>';
       html+='</div>';
       html+='<div style="background:var(--bg-danger); border-radius:var(--r-md); border:0.5px solid rgba(163,45,45,0.22); padding:14px 16px; margin-top:10px;">'
