@@ -2372,6 +2372,11 @@ var qrcode = function() {
   var lastTel="",lastDob="";
   var REFRESH="";
   var PUBLISH_DISP="7月1日(火)";
+  var SITE={mode:"open",openAt:"",texts:{
+    waiting:"お申込み状況の確認サイトは、下記の日時より公開いたします。公開後、携帯電話番号と生年月日でご確認いただけます。",
+    closed:"メンテナンスのため、確認サイトを一時的に停止しております。お手数ですが、しばらく時間をおいて再度アクセスしてください。ご不便をおかけし申し訳ございません。",
+    ended:"お申込み状況の確認期間は終了いたしました。たくさんのお申込みをいただきありがとうございました。ご不明な点は大阪府歯科医師会 医療課（06-6772-8884）までお問い合わせください。"
+  }};
   var PUBLISH_ICS_START="20260701";
   var PUBLISH_ICS_END="20260702";
   // ▼ GASの /exec URL（デプロイ更新なら下記のまま。新デプロイしたら差し替え）
@@ -2401,7 +2406,8 @@ var qrcode = function() {
   }
   function csRun(tel,dob){
     renderLoading();
-    csJsonp("lookup",{phone:tel,dob:dob},function(res){
+    csJsonp("lookup",{phone:tel,dob:dob,preview:PREVIEW},function(res){
+      if(res&&res.blocked){ SITE.mode=res.mode||"closed"; csRouteByMode(); return; }
       DATA.name=(res&&res.name)||""; DATA.slot=(res&&res.slot)||"";
       render((res&&res.screen)||"notfound");
     },function(){ renderBusy(); });
@@ -2443,7 +2449,7 @@ var qrcode = function() {
   }
   var confirmed=false;
   var lastCompleted="sent";
-  var states={input:"入力画面",comingsoon:"公開前(準備中)",waiting:"送信待ち",sent:"受付完了",review:"要確認",cancel_dup:"重複あり",cancel_member:"却下(会員)",cancel_renmei:"却下(連名)",cancel_self:"取消(本人依頼)",cancel_manual:"取消(手動)",notfound:"該当なし",multi:"複数該当"};
+  var states={input:"入力画面",comingsoon:"公開前(準備中)",closed:"一時停止",ended:"終了",waiting:"送信待ち",sent:"受付完了",review:"要確認",cancel_dup:"重複あり",cancel_member:"却下(会員)",cancel_renmei:"却下(連名)",cancel_manual:"取消(手動)",notfound:"該当なし",multi:"複数該当"};
 
   function stepBar(active){
     var steps=[{t:"受付",ic:"ti-inbox"},{t:"審査",ic:"ti-search"},{t:"完了",ic:"ti-rosette-discount-check"}];
@@ -2557,12 +2563,6 @@ var qrcode = function() {
     h+=applicantCard(true);
     return h;
   }
-  function selfCancelScreen(){
-    var h='';
-    h+=banner({bg:"var(--bg-secondary)",fg:"var(--text-primary)",ic:"ti-circle-check",title:"お申込みを取り消しました",desc:"お取り消しのご依頼を承り、お申込みを取り消しました。"});
-    h+=applicantCard(true);
-    return h;
-  }
   function manualCancelScreen(){
     var h='';
     h+=banner({bg:"var(--bg-secondary)",fg:"var(--text-primary)",ic:"ti-circle-x",title:"お申込みを取り消しました",desc:"お申込みは取り消しとなっております。お心当たりがない場合や、ご不明な点がございましたら、お手数ですが下記までお問い合わせください。"});
@@ -2586,6 +2586,7 @@ var qrcode = function() {
     var h='';
     h+='<div style="text-align:center; padding:18px 0 2px;">'+ic('clock-hour-8',46,'var(--text-tertiary)')+'</div>';
     h+='<p style="margin:10px 0 4px; font-size:18px; font-weight:600; text-align:center;">確認サイトは準備中です</p>';
+    h+='<p style="margin:8px 0 14px; font-size:13px; line-height:1.85; text-align:center; color:var(--text-secondary);">'+SITE.texts.waiting+'</p>';
     h+='<p style="margin:14px 0 2px; font-size:13px; text-align:center; color:var(--text-secondary);">公開予定日</p>';
     h+='<p style="margin:0 0 16px; font-size:22px; font-weight:700; text-align:center; color:var(--text-success);">'+PUBLISH_DISP+'</p>';
     h+='<p style="margin:0 0 20px; font-size:13px; line-height:1.85; text-align:center; color:var(--text-secondary);">公開日になりましたら、この同じページでお申込み状況をご確認いただけます。下記のいずれかの方法で、このページを保存しておくと便利です。</p>';
@@ -2602,6 +2603,21 @@ var qrcode = function() {
     h+='<button onclick="window.__lineShare()" style="width:100%; height:46px; margin-top:14px; background:var(--bg-primary); border:0.5px solid var(--border2); border-radius:var(--r-md); font-size:14px; font-weight:500; color:var(--text-primary); cursor:pointer;">LINEで自分に送って保存する</button>';
     h+='<button onclick="window.__toggleBM()" style="width:100%; height:46px; margin-top:9px; background:var(--bg-primary); border:0.5px solid var(--border2); border-radius:var(--r-md); font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">'+ic('bookmark',18)+'ブックマークする方法を見る</button>';
     h+='<div id="bm_help" style="display:none; margin-top:10px; padding:14px 16px; background:var(--bg-secondary); border-radius:var(--r-md);"></div>';
+    return h;
+  }
+
+  function closedScreen(){
+    var h='';
+    h+='<div style="text-align:center; padding:18px 0 2px;">'+ic('clock-hour-8',46,'var(--text-tertiary)')+'</div>';
+    h+='<p style="margin:10px 0 10px; font-size:18px; font-weight:600; text-align:center;">ただいま一時停止しています</p>';
+    h+='<p style="margin:0 0 8px; font-size:13.5px; line-height:1.9; text-align:center; color:var(--text-secondary);">'+SITE.texts.closed+'</p>';
+    return h;
+  }
+  function endedScreen(){
+    var h='';
+    h+='<div style="text-align:center; padding:18px 0 2px;">'+ic('rosette-discount-check',46,'var(--text-tertiary)')+'</div>';
+    h+='<p style="margin:10px 0 10px; font-size:18px; font-weight:600; text-align:center;">確認期間は終了しました</p>';
+    h+='<p style="margin:0 0 8px; font-size:13.5px; line-height:1.9; text-align:center; color:var(--text-secondary);">'+SITE.texts.ended+'</p>';
     return h;
   }
 
@@ -2627,6 +2643,14 @@ var qrcode = function() {
       html+=comingSoonScreen();
       b.innerHTML=html; window.scrollTo(0,0); return;
     }
+    if(state==="closed"){
+      html+=closedScreen();
+      b.innerHTML=html; window.scrollTo(0,0); return;
+    }
+    if(state==="ended"){
+      html+=endedScreen();
+      b.innerHTML=html; window.scrollTo(0,0); return;
+    }
     if(state==="waiting" || state==="sent"){
       html+=completedScreen();
     } else if(state==="cancel_dup"){
@@ -2640,9 +2664,7 @@ var qrcode = function() {
       html+=rejectScreen("お申し込みいただいた勤務先の会員歯科医師の情報（会員番号・お名前）について確認いたしましたところ、該当がございませんでした。");
     } else if(state==="cancel_renmei"){
       html+=rejectScreen("お申込みの「お名前」欄に、複数の方のお名前が入力されていました。本研修会はお一人ずつ別々にお申込みいただく必要があるため、お申込みはお受けできませんでした。");
-    } else if(state==="cancel_self"){
-      html+=selfCancelScreen();
-    } else if(state==="cancel_manual"){
+        } else if(state==="cancel_manual"){
       html+=manualCancelScreen();
     } else if(state==="multi"){
       html+='<div style="text-align:center; padding:6px 0 2px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="font-size:40px; color:var(--text-info);width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:0 0 auto;"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /> <path d="M16 3.13a4 4 0 0 1 0 7.75" /> <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg></div>';
@@ -2709,9 +2731,24 @@ var qrcode = function() {
     try{ navigator.clipboard.writeText(CONFIRM_URL).then(function(){ if(done) done.style.display="block"; },function(){ if(done) done.style.display="block"; }); }
     catch(e){ if(done) done.style.display="block"; }
   };
-  window.__confirm=function(){ confirmed=true; render(lastCompleted); try{ csJsonp("confirm",{phone:lastTel,dob:lastDob}); }catch(e){} };
+  window.__confirm=function(){ confirmed=true; render(lastCompleted); try{ csJsonp("confirm",{phone:lastTel,dob:lastDob,preview:PREVIEW}); }catch(e){} };
 
-  render("input");
+  var PREVIEW=(function(){try{var m=location.search.match(/[?&]preview=([^&]*)/);return m?decodeURIComponent(m[1]):"";}catch(e){return "";}})();
+  function csRouteByMode(){
+    var mode=SITE.mode||"open";
+    if(mode==="before") render("comingsoon");
+    else if(mode==="closed") render("closed");
+    else if(mode==="ended") render("ended");
+    else render("input");
+  }
+  function csBoot(){
+    renderLoading();
+    csJsonp("status",{preview:PREVIEW},function(res){
+      if(res){ SITE.mode=res.mode||"open"; SITE.openAt=res.openAt||""; if(res.texts)SITE.texts=res.texts; if(res.event)SITE.event=res.event; if(res.openAt)PUBLISH_DISP=res.openAt; }
+      csRouteByMode();
+    },function(){ render("input"); });
+  }
+  csBoot();
 })();
 </script>
 </body>
