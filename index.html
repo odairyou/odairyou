@@ -2482,7 +2482,7 @@ var qrcode = function() {
     return '<div style="margin-top:14px;"><p style="margin:0 0 8px; font-size:13px; font-weight:500;">'+ic(icn,16,'var(--text-secondary)','margin-right:6px;')+''+title+'</p>'
       +'<div style="background:var(--bg-secondary); border-radius:var(--r-md); padding:13px 15px; font-size:13px; line-height:1.75;">'+inner+'</div></div>';
   }
-  function eventDetails(){
+  function eventDetails(afterReceipt){
     var h='';
     h+='<div style="margin-top:16px;"><p style="margin:0 0 8px; font-size:13px; font-weight:500;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="font-size:16px; vertical-align:-2px; margin-right:6px; color:var(--text-secondary);width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:0 0 auto;"><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /> <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /> <path d="M9 14l2 2l4 -4" /></svg>受付内容</p>';
     h+='<div style="background:var(--bg-secondary); border-radius:var(--r-md); padding:4px 15px;">';
@@ -2490,6 +2490,7 @@ var qrcode = function() {
     h+='<div style="display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--border);"><span style="font-size:12px; color:var(--text-tertiary);">会場</span><span style="font-size:13px; text-align:right;">大阪府歯科医師会館<br>大ホール</span></div>';
     h+='<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0;"><span style="font-size:12px; color:var(--text-tertiary);">地図</span><a href="https://www.oda.or.jp/about/map/" target="_blank" style="font-size:13px; text-decoration:none;">会場案内を開く <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="font-size:13px;width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:0 0 auto;"><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" /> <path d="M11 13l9 -9" /> <path d="M15 4h5v5" /></svg></a></div>';
     h+='</div></div>';
+    if(afterReceipt) h+=afterReceipt;
     h+=infoBlock("ti-clock-hour-8","当日の受付について","開始時刻の<b style=\"font-weight:500;\">30分前</b>より受付を開始いたします。開始時刻に遅れることのないよう、お時間に余裕を持ってお越しください。");
     h+=infoBlock("ti-backpack","持ち物について","研修終了後に<b style=\"font-weight:500;\">受講修了証</b>をお渡しします。お持ち帰り用のクリアファイル等は、各自でご準備くださいますようお願いいたします。");
     h+='<div style="margin-top:14px;"><p style="margin:0 0 8px; font-size:13px; font-weight:500;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="font-size:16px; vertical-align:-2px; margin-right:6px; color:var(--text-secondary);width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:0 0 auto;"><path d="M12 9v4" /> <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /> <path d="M12 16h.01" /></svg>注意事項</p>'
@@ -2545,8 +2546,7 @@ var qrcode = function() {
     h+=stepBar("done");
     h+=completedTop();
     h+=applicantCard();
-    h+=eventDetails();
-    if(opts.dup) h+=dedupNote();
+    h+=eventDetails(opts.dup ? dedupNote() : '');
     h+=saveBlock();
     return h;
   }
