@@ -2395,7 +2395,7 @@ var qrcode = function() {
     var name="cb_"+Date.now()+"_"+Math.floor(Math.random()*1e6);
     var s=document.createElement("script");
     var done=false;
-    var timer=setTimeout(function(){ if(done)return; done=true; cleanup(); if(onErr)onErr(); },12000);
+    var timer=setTimeout(function(){ if(done)return; done=true; cleanup(); if(onErr)onErr(); },20000);
     function cleanup(){ try{delete window[name];}catch(e){window[name]=undefined;} if(s&&s.parentNode)s.parentNode.removeChild(s); clearTimeout(timer); }
     window[name]=function(res){ if(done)return; done=true; cleanup(); if(onOk)onOk(res); };
     var q="action="+encodeURIComponent(action)+"&callback="+name;
@@ -2442,7 +2442,7 @@ var qrcode = function() {
       +'<button onclick="window.__reboot()" style="width:100%; height:46px; background:var(--text-info); color:#fff; border:none; border-radius:var(--r-md); font-size:15px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">'+ic("refresh",18)+'もう一度読み込む</button>';
     window.scrollTo(0,0);
   }
-  window.__reboot=function(){ csBoot(); };
+  window.__reboot=function(){ __bootTry=0; csBoot(); };
 
   function renderBusy(){
     var b=document.getElementById("body");
@@ -2744,12 +2744,19 @@ var qrcode = function() {
     else if(mode==="open") render("input");
     else renderBootError();
   }
+  var __bootTry=0;
   function csBoot(){
     renderLoading();
     csJsonp("status",{preview:PREVIEW},function(res){
+      __bootTry=0;
       if(res){ SITE.mode=res.mode||""; SITE.openAt=res.openAt||""; if(res.texts)SITE.texts=res.texts; if(res.event)SITE.event=res.event; if(res.openAt)PUBLISH_DISP=res.openAt; }
       csRouteByMode();
-    },function(){ renderBootError(); });
+    },function(){
+      // 一度の失敗で止めない：少し待って自動で再試行（計3回）
+      __bootTry++;
+      if(__bootTry<3){ setTimeout(csBoot, __bootTry*2000); return; }
+      __bootTry=0; renderBootError();
+    });
   }
   csBoot();
 })();
