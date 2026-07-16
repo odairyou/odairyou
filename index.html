@@ -2372,7 +2372,7 @@ var qrcode = function() {
   var lastTel="",lastDob="";
   var REFRESH="";
   var PUBLISH_DISP="7月1日(火)";
-  var SITE={mode:"open",openAt:"",texts:{
+  var SITE={mode:"",openAt:"",texts:{
     waiting:"お申込み状況の確認サイトは、下記の日時より公開いたします。",
     closed:"メンテナンスのため、確認サイトを一時的に停止しております。お手数ですが、しばらく時間をおいて再度アクセスしてください。ご不便をおかけし申し訳ございません。",
     ended:"お申込み状況の確認期間は終了いたしました。たくさんのお申込みをいただきありがとうございました。ご不明な点は大阪府歯科医師会 医療課（06-6772-8884）までお問い合わせください。"
@@ -2434,6 +2434,16 @@ var qrcode = function() {
       +'<p style="margin:16px 0 0; font-size:13px; color:var(--text-secondary);">確認しています…</p></div>';
     window.scrollTo(0,0);
   }
+  function renderBootError(){
+    var b=document.getElementById("body");
+    b.innerHTML='<div style="text-align:center; padding:8px 0 2px;">'+ic("refresh",38,"var(--text-tertiary)")+'</div>'
+      +'<p style="margin:10px 0 4px; font-size:16px; font-weight:500; text-align:center;">ただいま表示できません</p>'
+      +'<p style="margin:0 0 16px; font-size:13px; text-align:center; color:var(--text-secondary); line-height:1.7;">通信が不安定か、アクセスが集中している可能性があります。少し時間をおいて、もう一度お試しください。</p>'
+      +'<button onclick="window.__reboot()" style="width:100%; height:46px; background:var(--text-info); color:#fff; border:none; border-radius:var(--r-md); font-size:15px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">'+ic("refresh",18)+'もう一度読み込む</button>';
+    window.scrollTo(0,0);
+  }
+  window.__reboot=function(){ csBoot(); };
+
   function renderBusy(){
     var b=document.getElementById("body");
     b.innerHTML='<div style="text-align:center; padding:8px 0 2px;">'+ic("refresh",38,"var(--text-tertiary)")+'</div>'
@@ -2726,18 +2736,20 @@ var qrcode = function() {
 
   var PREVIEW=(function(){try{var m=location.search.match(/[?&]preview=([^&]*)/);return m?decodeURIComponent(m[1]):"";}catch(e){return "";}})();
   function csRouteByMode(){
-    var mode=SITE.mode||"open";
+    // ★フェイルクローズ：モードが取得できていない場合は入力画面を出さない
+    var mode=SITE.mode||"";
     if(mode==="before") render("comingsoon");
     else if(mode==="closed") render("closed");
     else if(mode==="ended") render("ended");
-    else render("input");
+    else if(mode==="open") render("input");
+    else renderBootError();
   }
   function csBoot(){
     renderLoading();
     csJsonp("status",{preview:PREVIEW},function(res){
-      if(res){ SITE.mode=res.mode||"open"; SITE.openAt=res.openAt||""; if(res.texts)SITE.texts=res.texts; if(res.event)SITE.event=res.event; if(res.openAt)PUBLISH_DISP=res.openAt; }
+      if(res){ SITE.mode=res.mode||""; SITE.openAt=res.openAt||""; if(res.texts)SITE.texts=res.texts; if(res.event)SITE.event=res.event; if(res.openAt)PUBLISH_DISP=res.openAt; }
       csRouteByMode();
-    },function(){ render("input"); });
+    },function(){ renderBootError(); });
   }
   csBoot();
 })();
