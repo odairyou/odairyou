@@ -2404,9 +2404,31 @@ var qrcode = function() {
     s.onerror=function(){ if(done)return; done=true; cleanup(); if(onErr)onErr(); };
     document.body.appendChild(s);
   }
+
+  /* 通信の二重化：まず fetch（クロスオリジンではCookieを送らない＝Googleログイン状態の影響を受けない）。
+     失敗したら JSONP（scriptタグ）に自動フォールバック。広告ブロッカー等がどちらか一方を
+     塞いでいても、もう片方で届く。 */
+  function csFetch(action,params,onOk,onErr){
+    if(typeof fetch!=="function"){ onErr(); return; }
+    var q="action="+encodeURIComponent(action);
+    for(var k in params){ if(params.hasOwnProperty(k)) q+="&"+k+"="+encodeURIComponent(params[k]); }
+    var url=GAS_API_URL+(GAS_API_URL.indexOf("?")<0?"?":"&")+q;
+    var ctl=null, timer=null;
+    try{ if(typeof AbortController==="function"){ ctl=new AbortController(); timer=setTimeout(function(){ try{ctl.abort();}catch(e){} },20000); } }catch(e){}
+    fetch(url, ctl?{signal:ctl.signal}:{})
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(res){ if(timer)clearTimeout(timer); onOk(res); })
+      .catch(function(){ if(timer)clearTimeout(timer); onErr(); });
+  }
+  function csApi(action,params,onOk,onErr){
+    csFetch(action,params,onOk,function(){
+      csJsonp(action,params,onOk,onErr);
+    });
+  }
+
   function csRun(tel,dob){
     renderLoading();
-    csJsonp("lookup",{phone:tel,dob:dob,preview:PREVIEW},function(res){
+    csApi("lookup",{phone:tel,dob:dob,preview:PREVIEW},function(res){
       if(res&&res.blocked){ SITE.mode=res.mode||"closed"; csRouteByMode(); return; }
       DATA.name=(res&&res.name)||""; DATA.slot=(res&&res.slot)||"";
       render((res&&res.screen)||"notfound");
@@ -2437,9 +2459,19 @@ var qrcode = function() {
   function renderBootError(){
     var b=document.getElementById("body");
     b.innerHTML='<div style="text-align:center; padding:8px 0 2px;">'+ic("refresh",38,"var(--text-tertiary)")+'</div>'
-      +'<p style="margin:10px 0 4px; font-size:16px; font-weight:500; text-align:center;">ただいま表示できません</p>'
-      +'<p style="margin:0 0 16px; font-size:13px; text-align:center; color:var(--text-secondary); line-height:1.7;">通信が不安定か、アクセスが集中している可能性があります。少し時間をおいて、もう一度お試しください。</p>'
-      +'<button onclick="window.__reboot()" style="width:100%; height:46px; background:var(--text-info); color:#fff; border:none; border-radius:var(--r-md); font-size:15px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">'+ic("refresh",18)+'もう一度読み込む</button>';
+      +'<p style="margin:10px 0 4px; font-size:16px; font-weight:500; text-align:center;">このページを表示できません</p>'
+      +'<p style="margin:0 0 14px; font-size:13px; text-align:center; color:var(--text-secondary); line-height:1.7;">通信が不安定か、お使いのブラウザの設定により表示できない場合があります。</p>'
+      +'<button onclick="window.__reboot()" style="width:100%; height:46px; background:var(--text-info); color:#fff; border:none; border-radius:var(--r-md); font-size:15px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">'+ic("refresh",18)+'もう一度読み込む</button>'
+      +'<div style="margin-top:16px; padding:14px 16px; background:var(--bg-secondary); border-radius:var(--r-md);">'
+      +'<p style="margin:0 0 8px; font-size:12.5px; font-weight:600; color:var(--text-primary);">'+ic("bulb",14,null,"margin-right:5px;")+'それでも表示されない場合</p>'
+      +'<p style="margin:0; font-size:12px; line-height:1.9; color:var(--text-secondary);">'
+      +'・別のスマートフォンやパソコン、別のブラウザ（Safari・Edge など）で下記のURLを開いてください<br>'
+      +'・シークレットウィンドウ（プライベートブラウズ）で開くと表示できることがあります<br>'
+      +'・広告ブロックなどの拡張機能を一時的にオフにしてお試しください</p>'
+      +'<p style="margin:12px 0 0; font-size:12px; word-break:break-all; text-align:center; color:var(--text-secondary);">'+CONFIRM_URL+'</p>'
+      +'<p style="margin:8px 0 0; text-align:center;"><a href="#" onclick="window.__copyUrl();return false;" style="font-size:12.5px; color:var(--text-info); text-decoration:underline;">'+ic("copy",13,null,"margin-right:4px;")+'URLをコピー</a></p>'
+      +'<p id="copy_done" style="display:none; margin:6px 0 0; font-size:11px; color:var(--text-success); text-align:center;">URLをコピーしました</p>'
+      +'</div>';
     window.scrollTo(0,0);
   }
   window.__reboot=function(){ __bootTry=0; csBoot(); };
@@ -2732,7 +2764,7 @@ var qrcode = function() {
     try{ navigator.clipboard.writeText(CONFIRM_URL).then(function(){ if(done) done.style.display="block"; },function(){ if(done) done.style.display="block"; }); }
     catch(e){ if(done) done.style.display="block"; }
   };
-  window.__confirm=function(){ confirmed=true; render(lastCompleted); try{ csJsonp("confirm",{phone:lastTel,dob:lastDob,preview:PREVIEW}); }catch(e){} };
+  window.__confirm=function(){ confirmed=true; render(lastCompleted); try{ csApi("confirm",{phone:lastTel,dob:lastDob,preview:PREVIEW}); }catch(e){} };
 
   var PREVIEW=(function(){try{var m=location.search.match(/[?&]preview=([^&]*)/);return m?decodeURIComponent(m[1]):"";}catch(e){return "";}})();
   function csRouteByMode(){
@@ -2747,7 +2779,7 @@ var qrcode = function() {
   var __bootTry=0;
   function csBoot(){
     renderLoading();
-    csJsonp("status",{preview:PREVIEW},function(res){
+    csApi("status",{preview:PREVIEW},function(res){
       __bootTry=0;
       if(res){ SITE.mode=res.mode||""; SITE.openAt=res.openAt||""; if(res.texts)SITE.texts=res.texts; if(res.event)SITE.event=res.event; if(res.openAt)PUBLISH_DISP=res.openAt; }
       csRouteByMode();
