@@ -2529,8 +2529,9 @@ var qrcode = function() {
     var ev=SITE.event||{};
     function __esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
     function __link(t){return t.replace(/(https?:\/\/[^\s<]+)/g,function(u){return '<a href="'+u+'" target="_blank" style="text-decoration:none;">'+u+'</a>';});}
-    function __ml(t){return __link(__esc(t)).replace(/\n/g,"<br>");}
-    function __notes(t){var out="";String(t).split(/\n+/).forEach(function(x){x=x.trim();if(!x)return;out+="<li>"+__link(__esc(x))+"</li>";});return out;}
+    function __bold(t){return t.replace(/\*\*([^*\n]+)\*\*/g,'<b style="font-weight:600;">$1</b>');}
+    function __ml(t){return __link(__bold(__esc(t))).replace(/\n/g,"<br>");}
+    function __notes(t){var out="";String(t).split(/\n+/).forEach(function(x){x=x.trim();if(!x)return;out+="<li>"+__link(__bold(__esc(x)))+"</li>";});return out;}
     h+='<div style="margin-top:16px;"><p style="margin:0 0 8px; font-size:13px; font-weight:500;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="font-size:16px; vertical-align:-2px; margin-right:6px; color:var(--text-secondary);width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:0 0 auto;"><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /> <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /> <path d="M9 14l2 2l4 -4" /></svg>受付内容</p>';
     h+='<div style="background:var(--bg-secondary); border-radius:var(--r-md); padding:4px 15px;">';
     h+='<div style="display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--border);"><span style="font-size:12px; color:var(--text-tertiary);">受講日時</span><span style="font-size:13px; text-align:right;">'+(DATA.slot||"")+'<br><span style="font-size:11px; color:var(--text-secondary);">（終了予定）</span></span></div>';
