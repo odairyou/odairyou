@@ -2382,7 +2382,12 @@ var qrcode = function() {
   // ▼ GASの /exec URL（デプロイ更新なら下記のまま。新デプロイしたら差し替え）
   var GAS_API_URL="https://script.google.com/macros/s/AKfycbzSTZfRGSBWXVTda79ZVmRJrchfw3MJQOcE75vG8CtjtALR1nBUqeBLASHn7cFRD3H-/exec";
   // このページ自身のURL（QR・URL表示はこれ＝github.ioのページ）
-  var CONFIRM_URL=location.origin+location.pathname;
+  // クールコード(?c=)だけは自サイトURLに保持する（将来の複数クール対応の前提）。
+  // ※preview（管理者の裏口合言葉）は絶対に含めない＝コピー/表示で漏れないように。
+  var CONFIRM_URL=(function(){
+    try{ var m=location.search.match(/[?&]c=([^&]*)/); return location.origin+location.pathname+(m?("?c="+m[1]):""); }
+    catch(e){ return location.origin+location.pathname; }
+  })();
   var QR_DATAURL=csMakeQR(CONFIRM_URL);
   var REMINDER_TITLE="【大阪府歯科医師会】研修会 申込状況を確認する";
   var RE_KANA=/^[ぁ-ん゛゜ー]+$/;
