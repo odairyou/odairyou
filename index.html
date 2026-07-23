@@ -2526,21 +2526,26 @@ var qrcode = function() {
   }
   function eventDetails(afterReceipt){
     var h='';
+    var ev=SITE.event||{};
+    function __esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+    function __link(t){return t.replace(/(https?:\/\/[^\s<]+)/g,function(u){return '<a href="'+u+'" target="_blank" style="text-decoration:none;">'+u+'</a>';});}
+    function __ml(t){return __link(__esc(t)).replace(/\n/g,"<br>");}
+    function __notes(t){var out="";String(t).split(/\n+/).forEach(function(x){x=x.trim();if(!x)return;out+="<li>"+__link(__esc(x))+"</li>";});return out;}
     h+='<div style="margin-top:16px;"><p style="margin:0 0 8px; font-size:13px; font-weight:500;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="font-size:16px; vertical-align:-2px; margin-right:6px; color:var(--text-secondary);width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:0 0 auto;"><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /> <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /> <path d="M9 14l2 2l4 -4" /></svg>受付内容</p>';
     h+='<div style="background:var(--bg-secondary); border-radius:var(--r-md); padding:4px 15px;">';
     h+='<div style="display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--border);"><span style="font-size:12px; color:var(--text-tertiary);">受講日時</span><span style="font-size:13px; text-align:right;">'+(DATA.slot||"")+'<br><span style="font-size:11px; color:var(--text-secondary);">（終了予定）</span></span></div>';
-    h+='<div style="display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--border);"><span style="font-size:12px; color:var(--text-tertiary);">会場</span><span style="font-size:13px; text-align:right;">大阪府歯科医師会館<br>大ホール</span></div>';
-    h+='<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0;"><span style="font-size:12px; color:var(--text-tertiary);">地図</span><a href="https://www.oda.or.jp/about/map/" target="_blank" style="font-size:13px; text-decoration:none;">会場案内を開く <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="font-size:13px;width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:0 0 auto;"><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" /> <path d="M11 13l9 -9" /> <path d="M15 4h5v5" /></svg></a></div>';
+    h+='<div style="display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--border);"><span style="font-size:12px; color:var(--text-tertiary);">会場</span><span style="font-size:13px; text-align:right;">'+(ev.venue?__ml(ev.venue):'大阪府歯科医師会館<br>大ホール')+'</span></div>';
+    h+='<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0;"><span style="font-size:12px; color:var(--text-tertiary);">地図</span><a href="'+(ev.mapUrl?__esc(String(ev.mapUrl)):"https://www.oda.or.jp/about/map/")+'" target="_blank" style="font-size:13px; text-decoration:none;">会場案内を開く <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="font-size:13px;width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:0 0 auto;"><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" /> <path d="M11 13l9 -9" /> <path d="M15 4h5v5" /></svg></a></div>';
     h+='</div></div>';
     if(afterReceipt) h+=afterReceipt;
     h+=infoBlock("ti-clock-hour-8","当日の受付について","開始時刻の<b style=\"font-weight:500;\">30分前</b>より受付を開始いたします。開始時刻に遅れることのないよう、お時間に余裕を持ってお越しください。");
-    h+=infoBlock("ti-backpack","持ち物について","研修終了後に<b style=\"font-weight:500;\">受講修了証</b>をお渡しします。お持ち帰り用のクリアファイル等は、各自でご準備くださいますようお願いいたします。");
+    h+=infoBlock("ti-backpack","持ち物について",(ev.items?__ml(ev.items):"研修終了後に<b style=\"font-weight:500;\">受講修了証</b>をお渡しします。お持ち帰り用のクリアファイル等は、各自でご準備くださいますようお願いいたします。"));
     h+='<div style="margin-top:14px;"><p style="margin:0 0 8px; font-size:13px; font-weight:500;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="font-size:16px; vertical-align:-2px; margin-right:6px; color:var(--text-secondary);width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:0 0 auto;"><path d="M12 9v4" /> <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /> <path d="M12 16h.01" /></svg>注意事項</p>'
       +'<div style="background:var(--bg-secondary); border-radius:var(--r-md); padding:13px 15px;"><ul style="font-size:13px; line-height:1.85;">'
-      +'<li>受講修了証は、紛失等による再発行はいたしかねます。大切に保管してください。</li>'
+      +(ev.notes?__notes(ev.notes):('<li>受講修了証は、紛失等による再発行はいたしかねます。大切に保管してください。</li>'
       +'<li>当日は公共交通機関でお越しください。お車でのご来場はご遠慮願います。</li>'
       +'<li>会場内は座席により温度差が大きい場合があります。温度調節のできる服装でお越しください。</li>'
-      +'<li>台風等により中止する場合は、<a href="https://www.oda.or.jp/" target="_blank" style="text-decoration:none;">大阪府歯科医師会HP</a>の新着情報に掲載します。お越しになる前に必ずご確認ください。</li>'
+      +'<li>台風等により中止する場合は、<a href="https://www.oda.or.jp/" target="_blank" style="text-decoration:none;">大阪府歯科医師会HP</a>の新着情報に掲載します。お越しになる前に必ずご確認ください。</li>'))
       +'</ul></div></div>';
     h+='<div style="margin-top:16px; padding:13px 15px; background:var(--bg-tertiary); border-radius:var(--r-md); text-align:center;">'
       +'<p style="margin:0; font-size:12px; color:var(--text-secondary);">一般社団法人 大阪府歯科医師会 医療課</p>'
