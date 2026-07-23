@@ -2723,7 +2723,7 @@ var qrcode = function() {
       html+='</div>';
       html+='<div style="background:var(--bg-danger); border-radius:var(--r-md); border:0.5px solid rgba(163,45,45,0.22); padding:14px 16px; margin-top:10px;">'
         +'<p style="margin:0 0 6px; font-size:13px; font-weight:600; color:var(--text-danger);">'+ic('alert-triangle',15,null,'margin-right:6px;')+'上のいずれでも確認できない場合</p>'
-        +'<p style="margin:0; font-size:13px; line-height:1.7; color:var(--text-secondary);">ご入力内容に誤りがない場合、お申込み操作が最後まで完了していなかったか、あるいは先着順の定員に達したため「落選」となっております。<br><br>本研修会は先着順・定員制をとっております。お申込み操作の途中で定員が埋まってしまったケースや、システム上「送信完了画面」が表示された場合でも、同時刻のアクセス集中によりタッチの差で定員漏れとなるケースがございます。<br><br>誠に恐れ入りますが、何卒ご了承くださいますようお願いいたします。</p></div>';
+        +'<p style="margin:0; font-size:13px; line-height:1.7; color:var(--text-secondary);">ご入力内容に誤りがない場合、お申込み操作が最後まで完了していなかったか、あるいは先着順の定員に達したため「落選」となっております。<br><br>本研修会は先着順・定員制をとっております。お申込み操作の途中で定員が埋まってしまったケースや、システム上「送信完了画面」が表示された場合でも、同時刻のアクセス集中によりわずかな時間差で定員漏れとなるケースがございます。<br><br>誠に恐れ入りますが、何卒ご了承くださいますようお願いいたします。</p></div>';
     }
     if(state!=="notfound" && state!=="input" && state!=="comingsoon"){
       html+='<button onclick="window.__go(\'input\')" style="width:100%; height:42px; margin-top:16px; background:transparent; border:0.5px solid var(--border); border-radius:var(--r-md); font-size:13px; color:var(--text-secondary); cursor:pointer;">別の番号で確認する</button>';
