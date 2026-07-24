@@ -2822,23 +2822,6 @@ var qrcode = function() {
   var FROM_SELECT=/[?&]from=select/.test(location.search);
   var COHORTS=[];          // 選択ページに出すクール一覧
   var COHORT_TERM="";      // ヘッダーの「（◯◯開催分）」
-  /* ===== 公開前フォールバック =====
-     API取得に失敗しても、公開開始時刻より前なら「待機画面」を確実に表示する。
-     ※公開時刻を過ぎた後にAPIが落ちている場合は従来どおり起動エラー画面（フェイルクローズ維持）。
-     API復旧後もこの値は使われない（APIの値が優先）。 */
-  var FALLBACK_OPEN_MS=Date.parse("2026-08-05T10:00:00+09:00");
-  var FALLBACK_OPEN_DISP="2026年8月5日（水）10:00";
-  var FALLBACK_TERM="2026年9月・10月";
-  function csFallbackOrError(){
-    try{
-      if(FALLBACK_OPEN_MS && Date.now()<FALLBACK_OPEN_MS){
-        SITE.mode="before"; SITE.openAt=FALLBACK_OPEN_DISP; PUBLISH_DISP=FALLBACK_OPEN_DISP;
-        COHORT_TERM=FALLBACK_TERM; applyHeader();
-        render("comingsoon"); return;
-      }
-    }catch(e){}
-    renderBootError();
-  }
   function applyHeader(){
     var el=document.getElementById("hd_term");
     if(!el) return;
@@ -2880,7 +2863,7 @@ var qrcode = function() {
       // 一度の失敗で止めない：少し待って自動で再試行（計3回）
       __bootTry++;
       if(__bootTry<3){ setTimeout(csBoot, __bootTry*2000); return; }
-      __bootTry=0; csFallbackOrError();
+      __bootTry=0; renderBootError();
     });
   }
   csBoot();
