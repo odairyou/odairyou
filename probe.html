@@ -4,77 +4,79 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
-<title>通信診断 v2</title>
+<title>通信診断 v3</title>
 <style>
   body{font-family:monospace;font-size:13px;line-height:1.6;margin:16px;background:#111;color:#eee;}
-  h1{font-size:15px;} h2{font-size:13px;color:#8ab4f8;margin:18px 0 4px;}
+  h1{font-size:15px;} h2{font-size:13px;color:#8ab4f8;margin:16px 0 4px;}
   .box{border:1px solid #444;border-radius:8px;padding:10px 12px;margin:6px 0;white-space:pre-wrap;word-break:break-all;}
   .ok{color:#7CFC00;} .ng{color:#ff6b6b;} .wait{color:#aaa;}
+  input{width:100%;box-sizing:border-box;font-family:monospace;font-size:12px;padding:8px;border-radius:6px;border:1px solid #555;background:#222;color:#eee;}
+  button{margin-top:6px;padding:8px 14px;border-radius:6px;border:none;background:#8ab4f8;color:#111;font-weight:bold;cursor:pointer;}
 </style>
 </head>
 <body>
-<h1>確認サイト 通信診断 v2（画面の内容を全部コピーして報告）</h1>
+<h1>確認サイト 通信診断 v3</h1>
+<div class="box">別のURLを試すとき：下に /exec のURLを貼って「このURLをテスト」<br>
+<input id="u" placeholder="https://script.google.com/macros/s/....../exec">
+<button onclick="runCustom()">このURLをテスト</button></div>
 <div class="box" id="env"></div>
-<h2>旧デプロイ（今朝までサイトが使っていたURL）</h2>
-<div class="box" id="o_f"><span class="wait">fetch 実行中...</span></div>
-<div class="box" id="o_j"><span class="wait">JSONP 実行中...</span></div>
-<h2>新デプロイ（今日作ったURL）</h2>
-<div class="box" id="n_f"><span class="wait">fetch 実行中...</span></div>
-<div class="box" id="n_j"><span class="wait">JSONP 実行中...</span></div>
+<div id="results"></div>
 <h2>判定</h2>
-<div class="box" id="verdict"><span class="wait">待機中...</span></div>
+<div class="box" id="verdict"><span class="wait">テスト実行中...</span></div>
 <script>
-var OLD_URL="https://script.google.com/macros/s/AKfycbzSTZfRGSBWXVTda79ZVmRJrchfw3MJQOcE75vG8CtjtALR1nBUqeBLASHn7cFRD3H-/exec";
-var NEW_URL="https://script.google.com/macros/s/AKfycbzJ83r8pQIkAOlWO7CQoLVAg7Qs6biJaP0erwzsOcdNfPSnFRt1ZMY-tjoLtNRXS0-X/exec";
+var TARGETS=[
+  {label:"旧デプロイ", url:"https://script.google.com/macros/s/AKfycbzSTZfRGSBWXVTda79ZVmRJrchfw3MJQOcE75vG8CtjtALR1nBUqeBLASHn7cFRD3H-/exec"},
+  {label:"新デプロイ", url:"https://script.google.com/macros/s/AKfycbzJ83r8pQIkAOlWO7CQoLVAg7Qs6biJaP0erwzsOcdNfPSnFRt1ZMY-tjoLtNRXS0-X/exec"}
+];
 var Q="?action=status&c=2";
-var R={};
+var R={}, seq=0;
 document.getElementById("env").textContent="時刻: "+new Date().toLocaleString("ja-JP")+"\nこのページ: "+location.href;
 function esc(t){return String(t).replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c];});}
+function addBox(id,title){
+  var d=document.createElement("div");
+  d.innerHTML='<h2>'+esc(title)+'</h2><div class="box" id="'+id+'_f"><span class=wait>fetch 実行中...</span></div><div class="box" id="'+id+'_j"><span class=wait>JSONP 実行中...</span></div>';
+  document.getElementById("results").appendChild(d);
+}
 function show(id,html){document.getElementById(id).innerHTML=html;}
-function testFetch(url,id,key){
+function judge(){
+  var lines=[], anyPending=false;
+  for(var k in R){ if(!R[k].f||!R[k].j){anyPending=true;continue;}
+    var reach=R[k].f.reach||R[k].j.reach, term=(R[k].f.term||R[k].j.term);
+    lines.push(R[k].label+": "+(reach?("到達OK / 新コード:"+(term?'<span class=ok>乗っている◎</span>':'<span class=ng>乗っていない</span>')):'<span class=ng>到達NG</span>'));
+  }
+  if(!anyPending&&lines.length) show("verdict",lines.join("\n")+"\n\n「到達OK＋新コード乗っている◎」のURLをこの画面ごと報告 → index.htmlをそのURLに向ける");
+}
+function test(label,url){
+  var id="t"+(seq++);
+  R[id]={label:label,f:null,j:null};
+  addBox(id,label+"  "+url.slice(-24));
   fetch(url+Q).then(function(r){var st=r.status;return r.text().then(function(b){
-    var hasTerm=b.indexOf('"term"')>=0, isJson=false; try{JSON.parse(b);isJson=true;}catch(e){}
-    R[key]={reach:true,json:isJson,term:hasTerm};
-    show(id,"fetch: HTTP "+st+" / JSON解釈:"+(isJson?'<span class=ok>可</span>':'<span class=ng>不可</span>')+' / "term":'+(hasTerm?'<span class=ok>あり</span>':'<span class=ng>なし</span>')+"\n先頭200文字: "+esc(b.substring(0,200)));
+    var hasTerm=b.indexOf('"term"')>=0,isJson=false;try{JSON.parse(b);isJson=true;}catch(e){}
+    R[id].f={reach:(st===200&&isJson),term:hasTerm};
+    show(id+"_f","fetch: HTTP "+st+" / JSON:"+(isJson?'<span class=ok>可</span>':'<span class=ng>不可</span>')+' / term:'+(hasTerm?'<span class=ok>あり</span>':'なし')+"\n先頭150文字: "+esc(b.substring(0,150)));
     judge();
   });}).catch(function(e){
-    R[key]={reach:false,json:false,term:false};
-    show(id,'fetch: <span class=ng>通信失敗（'+esc(e&&e.message||e)+'）＝匿名で到達できない</span>');
-    judge();
+    R[id].f={reach:false,term:false};
+    show(id+"_f",'fetch: <span class=ng>通信失敗（匿名で到達できない）</span>'); judge();
   });
-}
-function testJsonp(url,id,key,cb){
-  var done=false;
-  window[cb]=function(res){ if(done)return; done=true;
-    R[key]={reach:true,json:true,term:!!(res&&res.term!==undefined&&res.term!=="")};
-    show(id,'JSONP: <span class=ok>成功</span> / mode='+esc(res&&res.mode||"?")+' / term='+esc(res&&JSON.stringify(res.term)));
-    judge(); };
+  var done=false,cb="__cb"+id;
+  window[cb]=function(res){if(done)return;done=true;
+    R[id].j={reach:true,term:!!(res&&res.term)};
+    show(id+"_j",'JSONP: <span class=ok>成功</span> / mode='+esc(res&&res.mode||"?")+' / term='+esc(JSON.stringify(res&&res.term))); judge();};
   var s=document.createElement("script");
   s.src=url+Q+"&callback="+cb;
-  s.onerror=function(){ if(done)return; done=true; R[key]={reach:false,json:false,term:false};
-    show(id,'JSONP: <span class=ng>失敗（エラーページが返っている）</span>'); judge(); };
-  setTimeout(function(){ if(done)return; done=true; R[key]={reach:false,json:false,term:false};
-    show(id,'JSONP: <span class=ng>失敗（20秒応答なし）</span>'); judge(); },20000);
+  s.onerror=function(){if(done)return;done=true;R[id].j={reach:false,term:false};
+    show(id+"_j",'JSONP: <span class=ng>失敗（エラーページ）</span>'); judge();};
+  setTimeout(function(){if(done)return;done=true;R[id].j={reach:false,term:false};
+    show(id+"_j",'JSONP: <span class=ng>失敗（20秒無応答）</span>'); judge();},20000);
   document.body.appendChild(s);
 }
-function judge(){
-  if(!(R.of&&R.oj&&R.nf&&R.nj)) return;
-  var oldReach=R.of.reach||R.oj.reach, oldTerm=R.of.term||R.oj.term;
-  var newReach=R.nf.reach||R.nj.reach, newTerm=R.nf.term||R.nj.term;
-  var lines=[];
-  lines.push("旧デプロイ: "+(oldReach?"到達OK":"到達NG")+(oldReach?(" / 新コード:"+(oldTerm?"乗っている":"乗っていない")):""));
-  lines.push("新デプロイ: "+(newReach?"到達OK":"到達NG")+(newReach?(" / 新コード:"+(newTerm?"乗っている":"乗っていない")):""));
-  var advice="";
-  if(oldReach&&oldTerm) advice='<span class=ok>◎ 旧デプロイに新コードが乗った。index.htmlは旧URLに戻してあるので、このままサイトが動く。</span>';
-  else if(oldReach&&!oldTerm) advice='<span class=ng>→ 旧デプロイは生きているが旧コードのまま。旧デプロイを「新バージョン」で更新すること（手順は指示参照）。</span>';
-  else if(!oldReach&&newReach&&newTerm) advice='<span class=ng>→ 旧は死に、新は生きて新コード。index.htmlを新URLに向け直す必要あり（報告して）。</span>';
-  else advice='<span class=ng>★ 想定外の組み合わせ。この画面を全部貼って報告。</span>';
-  show("verdict",lines.join("\n")+"\n\n"+advice);
+function runCustom(){
+  var u=(document.getElementById("u").value||"").trim();
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/[^\/]+\/exec$/.test(u)){alert("URLの形式が違う（.../exec で終わる形で貼って）");return;}
+  test("手入力URL",u);
 }
-testFetch(OLD_URL,"o_f","of");
-testJsonp(OLD_URL,"o_j","oj","__cbOld");
-testFetch(NEW_URL,"n_f","nf");
-testJsonp(NEW_URL,"n_j","nj","__cbNew");
+TARGETS.forEach(function(t){test(t.label,t.url);});
 </script>
 </body>
 </html>
