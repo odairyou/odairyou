@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>通信診断</title>
+<style>
+  body{font-family:monospace;font-size:13px;line-height:1.6;margin:16px;background:#111;color:#eee;}
+  h1{font-size:15px;}
+  .box{border:1px solid #444;border-radius:8px;padding:10px 12px;margin:10px 0;white-space:pre-wrap;word-break:break-all;}
+  .ok{color:#7CFC00;} .ng{color:#ff6b6b;} .wait{color:#aaa;}
+</style>
+</head>
+<body>
+<h1>確認サイト 通信診断（この画面の内容を全部コピーして報告）</h1>
+<div class="box" id="env">環境情報 取得中...</div>
+<div class="box" id="t1"><span class="wait">テスト1（fetch）実行中...</span></div>
+<div class="box" id="t2"><span class="wait">テスト2（JSONP）待機中...</span></div>
+<div class="box" id="t3"><span class="wait">判定 待機中...</span></div>
+<script>
+var GAS_API_URL="https://script.google.com/macros/s/AKfycbzJ83r8pQIkAOlWO7CQoLVAg7Qs6biJaP0erwzsOcdNfPSnFRt1ZMY-tjoLtNRXS0-X/exec";
+var URL_TEST=GAS_API_URL+"?action=status&c=2";
+var R={fetch:null,jsonp:null};
+
+document.getElementById("env").textContent=
+  "時刻: "+new Date().toLocaleString("ja-JP")+"\n"+
+  "このページ: "+location.href+"\n"+
+  "叩くAPI: "+URL_TEST+"\n"+
+  "UA: "+navigator.userAgent;
+
+function esc(t){return String(t).replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c];});}
+function show(id,html){document.getElementById(id).innerHTML=html;}
+
+function judge(){
+  if(R.fetch===null||R.jsonp===null) return;
+  var f=R.fetch,j=R.jsonp,msg="";
+  if(f.ok&&f.hasTerm)      msg='<span class="ok">◎ fetchで新コードのJSONが取れている。サイトは動くはず。動かないならindex.html側の問題。</span>';
+  else if(f.ok&&!f.hasTerm)msg='<span class="ng">△ JSONは返るが term が無い＝デプロイに旧コードが乗っている（バージョン選択を確認）。</span>';
+  else if(f.status===200&&f.looksLogin) msg='<span class="ng">★ ログインページが返っている＝アクセス設定が「Googleアカウントを持つ全員」の可能性。</span>';
+  else if(!f.ok&&j.ok)     msg='<span class="ng">△ fetchは失敗するがJSONPは通る。この回線/ブラウザ特有のブロック。</span>';
+  else                     msg='<span class="ng">★ fetch/JSONPとも失敗＝このURLのデプロイに匿名で到達できない。デプロイ設定/URLを疑う。</span>';
+  show("t3","判定:\n"+msg);
+}
+
+// テスト1: fetch（本番と同じ・Cookieなし匿名）
+(function(){
+  var t0=Date.now();
+  fetch(URL_TEST).then(function(r){
+    var st=r.status;
+    return r.text().then(function(body){
+      var hasTerm=body.indexOf('"term"')>=0;
+      var looksLogin=/accounts\.google\.com|ServiceLogin|ログイン/i.test(body);
+      var isJson=false; try{JSON.parse(body); isJson=true;}catch(e){}
+      R.fetch={ok:(st===200&&isJson),status:st,hasTerm:hasTerm,looksLogin:looksLogin};
+      show("t1","テスト1（fetch） "+(Date.now()-t0)+"ms\n"+
+        "HTTPステータス: "+st+"\n"+
+        "JSONとして解釈: "+(isJson?'<span class="ok">できた</span>':'<span class="ng">できない</span>')+"\n"+
+        '"term"を含む: '+(hasTerm?'<span class="ok">はい</span>':'<span class="ng">いいえ</span>')+"\n"+
+        "応答の先頭300文字:\n"+esc(body.substring(0,300)));
+      judge();
+    });
+  }).catch(function(e){
+    R.fetch={ok:false,status:0,hasTerm:false,looksLogin:false};
+    show("t1",'テスト1（fetch） <span class="ng">通信自体が失敗: '+esc(e&&e.message||e)+"</span>\n（ネットワーク遮断・CORS拒否など。応答は受け取れていない）");
+    judge();
+  });
+})();
+
+// テスト2: JSONP（予備経路と同じ）
+(function(){
+  var done=false;
+  window.__probeCb=function(res){
+    if(done) return; done=true;
+    R.jsonp={ok:true};
+    show("t2",'テスト2（JSONP） <span class="ok">成功</span>\n'+
+      '"term": '+esc(res&&res.term!==undefined?JSON.stringify(res.term):"(項目なし)")+"\n"+
+      "mode: "+esc(res&&res.mode||"?"));
+    judge();
+  };
+  var s=document.createElement("script");
+  s.src=URL_TEST+"&callback=__probeCb";
+  s.onerror=function(){
+    if(done) return; done=true;
+    R.jsonp={ok:false};
+    show("t2",'テスト2（JSONP） <span class="ng">失敗（scriptとして読み込めない＝HTMLかエラーが返っている）</span>');
+    judge();
+  };
+  setTimeout(function(){
+    if(done) return; done=true;
+    R.jsonp={ok:false};
+    show("t2",'テスト2（JSONP） <span class="ng">失敗（20秒応答なし）</span>');
+    judge();
+  },20000);
+  document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>
