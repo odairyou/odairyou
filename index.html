@@ -2445,7 +2445,7 @@ var qrcode = function() {
     window.__clearErr();
     var ok=true;
     if(!RE_TEL.test(tel)){ showErr("e_tel","ハイフンなしの半角数字11桁で入力してください（例：09012345678）"); ok=false; }
-    if(!RE_DOB.test(dob)){ showErr("e_dob","西暦8桁の半角数字で入力してください（例：19550308）"); ok=false; }
+    if(!RE_DOB.test(dob)){ showErr("e_dob","西暦8桁の半角数字で入力してください（例：19900101）"); ok=false; }
     if(!ok) return;
     lastTel=tel; lastDob=dob;
     csRun(tel,dob);
@@ -2685,7 +2685,7 @@ var qrcode = function() {
       html+='<p id="e_tel" class="err"></p>';
       html+='<label style="display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; margin:13px 0 7px; color:var(--text-secondary);">'+ic("calendar-month",15,"var(--text-secondary)")+'生年月日</label>';
       html+='<div class="fieldwrap"><span class="ficon">'+ic("calendar-month",20)+'</span><input id="f_dob" type="text" inputmode="numeric" placeholder="" oninput="window.__clearErr()" /></div>';
-      html+='<p style="margin:7px 0 0; font-size:11.5px; line-height:1.6; color:var(--text-tertiary);">西暦8桁の半角数字でご入力ください。例）1955年3月8日生まれ → 19550308</p>';
+      html+='<p style="margin:7px 0 0; font-size:11.5px; line-height:1.6; color:var(--text-tertiary);">西暦8桁の半角数字でご入力ください。例）1990年1月1日生まれ → 19900101</p>';
       html+='<p id="e_dob" class="err"></p>';
       html+='<button onclick="window.__submit()" style="width:100%; height:54px; margin-top:20px; background:var(--accent); color:#fff; border:none; border-radius:14px; font-size:16px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; box-shadow:0 6px 18px rgba(37,99,235,0.30);">'+ic("search",20)+'状況を確認する</button>';
       b.innerHTML=html; window.scrollTo(0,0); return;
